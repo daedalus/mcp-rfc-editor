@@ -1,0 +1,22 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.daedalus/mcp-rfc-editor",
+  "description": "An MCP server that provides rfc editing capabilities",
+  "repository": {
+    "url": "https://github.com/daedalus/mcp-rfc-editor",
+    "source": "github"
+  },
+  "version": "0.1.0.3",
+  "packages": [
+    {
+      "registryType": "pypi",
+      "identifier": "mcp-rfc-editor",
+      "version": "0.1.0.3",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+      ]
+    }
+  ]
+}
