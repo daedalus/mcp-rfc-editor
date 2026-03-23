@@ -1,0 +1,40 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.backends.legacy:build"
+
+[project]
+name = "mcp-rfc-editor"
+version = "0.1.0.1"
+description = "MCP server for editing RFC documents using rfc-editor library"
+requires-python = ">=3.11"
+dependencies = [
+    "mcp>=1.0.0",
+    "rfc-editor>=0.1.0.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "ruff",
+    "flake8",
+    "pytest",
+]
+
+[project.scripts]
+mcp-rfc-editor = "mcp_rfc_editor.server:run"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.black]
+line-length = 88
+target-version = ["py311"]
+
+[tool.ruff]
+line-length = 88
+target-version = "py311"
+select = ["E", "F", "W", "I", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-v --tb=short"
