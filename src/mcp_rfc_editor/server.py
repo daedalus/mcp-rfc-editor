@@ -1,5 +1,6 @@
 """MCP Server for editing RFC documents."""
 
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -9,6 +10,8 @@ from mcp.types import TextContent, Tool
 from rfc_editor import RFCAuthor, RFCDocument, RFCEditor, RFCSection
 
 app = Server("mcp-rfc-editor")
+
+_sessions: dict[str, RFCDocument] = {}
 
 
 def _document_to_dict(doc: RFCDocument) -> dict[str, Any]:
@@ -95,6 +98,14 @@ async def list_tools() -> list[Tool]:
                     "rfc_number": {"type": "string", "description": "RFC number"},
                     "title": {"type": "string", "description": "Document title"},
                 },
+            },
+        ),
+        Tool(
+            name="get_document",
+            description="Get the current active RFC document from session context",
+            inputSchema={
+                "type": "object",
+                "properties": {},
             },
         ),
         Tool(
@@ -427,14 +438,25 @@ async def list_tools() -> list[Tool]:
 
 @app.call_tool()
 async def call_tool(name: str, arguments: Any) -> list[TextContent]:
+    session_id = arguments.pop("session_id", None) if arguments else None
+
     doc = None
-    if "document" in arguments and arguments["document"]:
+    if session_id and session_id in _sessions:
+        doc = _sessions[session_id]
+    elif "document" in arguments and arguments["document"]:
         doc = _dict_to_document(arguments["document"])
 
     if name == "load_rfc":
         editor = RFCEditor()
         result = editor.load(Path(arguments["filepath"]))
-        return [TextContent(type="text", text=str(_document_to_dict(result)))]
+        session_id = str(uuid.uuid4())
+        _sessions[session_id] = result
+        return [
+            TextContent(
+                type="text",
+                text=str(_document_to_dict(result)) + f"\n\nSession ID: {session_id}",
+            )
+        ]
 
     elif name == "download_rfc":
         editor = RFCEditor()
@@ -442,62 +464,160 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
         result = editor.download(
             arguments["rfc_id"], Path(filepath) if filepath else None
         )
-        return [TextContent(type="text", text=str(_document_to_dict(result)))]
+        session_id = str(uuid.uuid4())
+        _sessions[session_id] = result
+        return [
+            TextContent(
+                type="text",
+                text=str(_document_to_dict(result)) + f"\n\nSession ID: {session_id}",
+            )
+        ]
 
     elif name == "create_rfc":
         result = RFCDocument(
             rfc_number=arguments.get("rfc_number", ""),
             title=arguments.get("title", ""),
         )
-        return [TextContent(type="text", text=str(_document_to_dict(result)))]
+        session_id = str(uuid.uuid4())
+        _sessions[session_id] = result
+        return [
+            TextContent(
+                type="text",
+                text=str(_document_to_dict(result)) + f"\n\nSession ID: {session_id}",
+            )
+        ]
+
+    elif name == "get_document":
+        if session_id and session_id in _sessions:
+            return [
+                TextContent(
+                    type="text", text=str(_document_to_dict(_sessions[session_id]))
+                )
+            ]
+        return [
+            TextContent(
+                type="text", text="No active session. Load or create a document first."
+            )
+        ]
 
     elif name == "save_rfc":
         editor = RFCEditor()
         editor.document = _dict_to_document(arguments["document"])
         editor.save(Path(arguments["filepath"]))
-        return [TextContent(type="text", text=f"Saved to {arguments['filepath']}")]
+        if session_id and session_id in _sessions:
+            _sessions[session_id] = editor.document
+        return [
+            TextContent(
+                type="text",
+                text=f"Saved to {arguments['filepath']}"
+                + (f" (Session: {session_id})" if session_id else ""),
+            )
+        ]
 
     elif name == "get_title":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         editor = RFCEditor()
         editor.document = doc
         return [TextContent(type="text", text=str(editor.get_title()))]
 
     elif name == "get_abstract":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         editor = RFCEditor()
         editor.document = doc
         return [TextContent(type="text", text=str(editor.get_abstract()))]
 
     elif name == "get_copyright":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         editor = RFCEditor()
         editor.document = doc
         return [TextContent(type="text", text=str(editor.get_copyright()))]
 
     elif name == "get_status_of_memo":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         editor = RFCEditor()
         editor.document = doc
         return [TextContent(type="text", text=str(editor.get_status_of_memo()))]
 
     elif name == "get_toc":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         editor = RFCEditor()
         editor.document = doc
         return [TextContent(type="text", text=str(editor.get_toc()))]
 
     elif name == "get_acknowledgements":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         editor = RFCEditor()
         editor.document = doc
         return [TextContent(type="text", text=str(editor.get_acknowledgements()))]
 
     elif name == "get_contributors":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         editor = RFCEditor()
         editor.document = doc
         return [TextContent(type="text", text=str(editor.get_contributors()))]
 
     elif name == "get_authors_address":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         editor = RFCEditor()
         editor.document = doc
         return [TextContent(type="text", text=str(editor.get_authors_address()))]
 
     elif name == "get_section_by_title":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         editor = RFCEditor()
         editor.document = doc
         section = editor.get_section_by_title(arguments["title"])
@@ -506,89 +626,298 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
         ]
 
     elif name == "set_title":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         editor = RFCEditor()
         editor.document = doc
         editor.set_title(arguments["title"])
-        return [TextContent(type="text", text=str(_document_to_dict(editor.document)))]
+        if session_id and session_id in _sessions:
+            _sessions[session_id] = editor.document
+        return [
+            TextContent(
+                type="text",
+                text=str(_document_to_dict(editor.document))
+                + (f"\n\nSession ID: {session_id}" if session_id else ""),
+            )
+        ]
 
     elif name == "set_abstract":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         editor = RFCEditor()
         editor.document = doc
         editor.set_abstract(arguments["abstract"])
-        return [TextContent(type="text", text=str(_document_to_dict(editor.document)))]
+        if session_id and session_id in _sessions:
+            _sessions[session_id] = editor.document
+        return [
+            TextContent(
+                type="text",
+                text=str(_document_to_dict(editor.document))
+                + (f"\n\nSession ID: {session_id}" if session_id else ""),
+            )
+        ]
 
     elif name == "add_section":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         editor = RFCEditor()
         editor.document = doc
         editor.add_section(
             arguments["number"], arguments["title"], arguments["content"]
         )
-        return [TextContent(type="text", text=str(_document_to_dict(editor.document)))]
+        if session_id and session_id in _sessions:
+            _sessions[session_id] = editor.document
+        return [
+            TextContent(
+                type="text",
+                text=str(_document_to_dict(editor.document))
+                + (f"\n\nSession ID: {session_id}" if session_id else ""),
+            )
+        ]
 
     elif name == "update_section":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         editor = RFCEditor()
         editor.document = doc
         editor.update_section(
             arguments["number"], arguments.get("title"), arguments.get("content")
         )
-        return [TextContent(type="text", text=str(_document_to_dict(editor.document)))]
+        if session_id and session_id in _sessions:
+            _sessions[session_id] = editor.document
+        return [
+            TextContent(
+                type="text",
+                text=str(_document_to_dict(editor.document))
+                + (f"\n\nSession ID: {session_id}" if session_id else ""),
+            )
+        ]
 
     elif name == "delete_section":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         editor = RFCEditor()
         editor.document = doc
         editor.delete_section(arguments["number"])
-        return [TextContent(type="text", text=str(_document_to_dict(editor.document)))]
+        if session_id and session_id in _sessions:
+            _sessions[session_id] = editor.document
+        return [
+            TextContent(
+                type="text",
+                text=str(_document_to_dict(editor.document))
+                + (f"\n\nSession ID: {session_id}" if session_id else ""),
+            )
+        ]
 
     elif name == "list_sections":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         return [TextContent(type="text", text=str([s.to_dict() for s in doc.sections]))]
 
     elif name == "set_copyright":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         editor = RFCEditor()
         editor.document = doc
         editor.set_copyright(arguments["year"], arguments["holders"])
-        return [TextContent(type="text", text=str(_document_to_dict(editor.document)))]
+        if session_id and session_id in _sessions:
+            _sessions[session_id] = editor.document
+        return [
+            TextContent(
+                type="text",
+                text=str(_document_to_dict(editor.document))
+                + (f"\n\nSession ID: {session_id}" if session_id else ""),
+            )
+        ]
 
     elif name == "set_authors":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         doc.authors = [RFCAuthor(**a) for a in arguments["authors"]]
-        return [TextContent(type="text", text=str(_document_to_dict(doc)))]
+        if session_id and session_id in _sessions:
+            _sessions[session_id] = doc
+        return [
+            TextContent(
+                type="text",
+                text=str(_document_to_dict(doc))
+                + (f"\n\nSession ID: {session_id}" if session_id else ""),
+            )
+        ]
 
     elif name == "set_acknowledgements":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         editor = RFCEditor()
         editor.document = doc
         editor.set_acknowledgements(arguments["content"])
-        return [TextContent(type="text", text=str(_document_to_dict(editor.document)))]
+        if session_id and session_id in _sessions:
+            _sessions[session_id] = editor.document
+        return [
+            TextContent(
+                type="text",
+                text=str(_document_to_dict(editor.document))
+                + (f"\n\nSession ID: {session_id}" if session_id else ""),
+            )
+        ]
 
     elif name == "set_contributors":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         editor = RFCEditor()
         editor.document = doc
         editor.set_contributors(arguments["content"])
-        return [TextContent(type="text", text=str(_document_to_dict(editor.document)))]
+        if session_id and session_id in _sessions:
+            _sessions[session_id] = editor.document
+        return [
+            TextContent(
+                type="text",
+                text=str(_document_to_dict(editor.document))
+                + (f"\n\nSession ID: {session_id}" if session_id else ""),
+            )
+        ]
 
     elif name == "set_authors_address":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         editor = RFCEditor()
         editor.document = doc
         editor.set_authors_address(arguments["address"])
-        return [TextContent(type="text", text=str(_document_to_dict(editor.document)))]
+        if session_id and session_id in _sessions:
+            _sessions[session_id] = editor.document
+        return [
+            TextContent(
+                type="text",
+                text=str(_document_to_dict(editor.document))
+                + (f"\n\nSession ID: {session_id}" if session_id else ""),
+            )
+        ]
 
     elif name == "set_status_of_memo":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         editor = RFCEditor()
         editor.document = doc
         editor.set_status_of_memo(arguments["status"])
-        return [TextContent(type="text", text=str(_document_to_dict(editor.document)))]
+        if session_id and session_id in _sessions:
+            _sessions[session_id] = editor.document
+        return [
+            TextContent(
+                type="text",
+                text=str(_document_to_dict(editor.document))
+                + (f"\n\nSession ID: {session_id}" if session_id else ""),
+            )
+        ]
 
     elif name == "set_toc":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         editor = RFCEditor()
         editor.document = doc
         editor.set_toc(arguments["toc"])
-        return [TextContent(type="text", text=str(_document_to_dict(editor.document)))]
+        if session_id and session_id in _sessions:
+            _sessions[session_id] = editor.document
+        return [
+            TextContent(
+                type="text",
+                text=str(_document_to_dict(editor.document))
+                + (f"\n\nSession ID: {session_id}" if session_id else ""),
+            )
+        ]
 
     elif name == "set_section_by_title":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         editor = RFCEditor()
         editor.document = doc
         editor.set_section_by_title(arguments["title"], arguments["content"])
-        return [TextContent(type="text", text=str(_document_to_dict(editor.document)))]
+        if session_id and session_id in _sessions:
+            _sessions[session_id] = editor.document
+        return [
+            TextContent(
+                type="text",
+                text=str(_document_to_dict(editor.document))
+                + (f"\n\nSession ID: {session_id}" if session_id else ""),
+            )
+        ]
 
     elif name == "to_dict":
+        if not doc:
+            return [
+                TextContent(
+                    type="text",
+                    text="No document in session. Provide session_id or document.",
+                )
+            ]
         return [TextContent(type="text", text=str(_document_to_dict(doc)))]
 
     return [TextContent(type="text", text="Unknown tool")]

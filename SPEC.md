@@ -14,6 +14,7 @@ An MCP (Model Context Protocol) server that provides tools for editing RFC TXT d
 - List all sections in a document
 - Get/delete specific sections by number or title
 - Add new sections
+- Session-based context for document persistence
 
 ### Not Scope
 - PDF generation
@@ -27,70 +28,34 @@ An MCP (Model Context Protocol) server that provides tools for editing RFC TXT d
 
 1. **load_rfc**
    - `filepath: string` (required) - Path to RFC TXT file
-   - Returns: RFCDocument structure with all fields
+   - Returns: RFCDocument structure with all fields + Session ID
 
 2. **download_rfc**
    - `rfc_id: string|integer` (required) - RFC number (e.g., "791" or 791)
    - `filepath: string` (optional) - Path to save the file before parsing
-   - Returns: RFCDocument structure with all fields
+   - Returns: RFCDocument structure with all fields + Session ID
 
 3. **create_rfc**
    - `rfc_number: string` (optional) - RFC number
    - `title: string` (optional) - Document title
-   - Returns: Empty RFCDocument structure
+   - Returns: Empty RFCDocument structure + Session ID
 
-3. **save_rfc**
+4. **get_document**
+   - `session_id: string` (optional) - Session ID from load/create/download
+   - Returns: RFCDocument from session context
+
+5. **save_rfc**
    - `filepath: string` (required) - Output file path
-   - `document: object` (required) - RFCDocument to save
+   - `document: object` (optional) - RFCDocument to save
+   - `session_id: string` (optional) - Session ID to save from
    - Returns: Success message
 
-4. **set_title**
-   - `document: object` (required) - RFCDocument
-   - `title: string` (required) - New title
-   - Returns: Updated document
+### Session-Aware Tools
+All document modification tools accept either:
+- `document: object` - Full RFCDocument object (legacy mode)
+- `session_id: string` - Session ID to retrieve document from session
 
-5. **set_abstract**
-   - `document: object` (required) - RFCDocument
-   - `abstract: string` (required) - Abstract text
-   - Returns: Updated document
-
-6. **add_section**
-   - `document: object` (required) - RFCDocument
-   - `number: string` (required) - Section number (e.g., "1", "2.1")
-   - `title: string` (required) - Section title
-   - `content: string` (required) - Section content
-   - Returns: Updated document
-
-7. **update_section**
-   - `document: object` (required) - RFCDocument
-   - `number: string` (required) - Section number
-   - `title: string` (optional) - New title
-   - `content: string` (optional) - New content
-   - Returns: Updated document
-
-8. **delete_section**
-   - `document: object` (required) - RFCDocument
-   - `number: string` (required) - Section number to delete
-   - Returns: Updated document
-
-9. **list_sections**
-   - `document: object` (required) - RFCDocument
-   - Returns: Array of section objects with number, title, content
-
-10. **set_copyright**
-    - `document: object` (required) - RFCDocument
-    - `year: integer` (required) - Copyright year
-    - `holders: string` (required) - Copyright holders
-    - Returns: Updated document
-
-11. **set_authors**
-    - `document: object` (required) - RFCDocument
-    - `authors: array` (required) - Array of {name, organization, email, address}
-    - Returns: Updated document
-
-12. **to_dict**
-    - `document: object` (required) - RFCDocument
-    - Returns: Dictionary representation of document
+Tools: set_title, set_abstract, add_section, update_section, delete_section, list_sections, set_copyright, set_authors, set_acknowledgements, set_contributors, set_authors_address, set_status_of_memo, set_toc, set_section_by_title, to_dict
 
 ## Data Formats
 
@@ -144,6 +109,9 @@ An MCP (Model Context Protocol) server that provides tools for editing RFC TXT d
 8. Downloading an invalid RFC number should raise an error
 9. Network failure during download should raise an error
 10. Invalid RFC ID format should raise an error
+11. Using an invalid session_id should return appropriate error
+12. No document in session when using session_id should return error
+13. Session should persist document changes across tool calls
 
 ## Performance & Constraints
 - Python 3.11+
