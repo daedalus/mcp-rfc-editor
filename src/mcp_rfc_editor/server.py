@@ -95,6 +95,106 @@ async def list_tools() -> list[Tool]:
             },
         ),
         Tool(
+            name="get_title",
+            description="Get the title of an RFC document",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "document": {"type": "object", "description": "RFCDocument"}
+                },
+                "required": ["document"],
+            },
+        ),
+        Tool(
+            name="get_abstract",
+            description="Get the abstract of an RFC document",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "document": {"type": "object", "description": "RFCDocument"}
+                },
+                "required": ["document"],
+            },
+        ),
+        Tool(
+            name="get_copyright",
+            description="Get the copyright notice of an RFC document",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "document": {"type": "object", "description": "RFCDocument"}
+                },
+                "required": ["document"],
+            },
+        ),
+        Tool(
+            name="get_status_of_memo",
+            description="Get the status of this memo section",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "document": {"type": "object", "description": "RFCDocument"}
+                },
+                "required": ["document"],
+            },
+        ),
+        Tool(
+            name="get_toc",
+            description="Get the table of contents",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "document": {"type": "object", "description": "RFCDocument"}
+                },
+                "required": ["document"],
+            },
+        ),
+        Tool(
+            name="get_acknowledgements",
+            description="Get the acknowledgements of an RFC document",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "document": {"type": "object", "description": "RFCDocument"}
+                },
+                "required": ["document"],
+            },
+        ),
+        Tool(
+            name="get_contributors",
+            description="Get the contributors of an RFC document",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "document": {"type": "object", "description": "RFCDocument"}
+                },
+                "required": ["document"],
+            },
+        ),
+        Tool(
+            name="get_authors_address",
+            description="Get the authors address section of an RFC document",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "document": {"type": "object", "description": "RFCDocument"}
+                },
+                "required": ["document"],
+            },
+        ),
+        Tool(
+            name="get_section_by_title",
+            description="Get a section by its title",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "document": {"type": "object", "description": "RFCDocument"},
+                    "title": {"type": "string", "description": "Section title"},
+                },
+                "required": ["document", "title"],
+            },
+        ),
+        Tool(
             name="set_title",
             description="Set the title of an RFC document",
             inputSchema={
@@ -330,6 +430,54 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
         editor.document = _dict_to_document(arguments["document"])
         editor.save(Path(arguments["filepath"]))
         return [TextContent(type="text", text=f"Saved to {arguments['filepath']}")]
+
+    elif name == "get_title":
+        editor = RFCEditor()
+        editor.document = doc
+        return [TextContent(type="text", text=str(editor.get_title()))]
+
+    elif name == "get_abstract":
+        editor = RFCEditor()
+        editor.document = doc
+        return [TextContent(type="text", text=str(editor.get_abstract()))]
+
+    elif name == "get_copyright":
+        editor = RFCEditor()
+        editor.document = doc
+        return [TextContent(type="text", text=str(editor.get_copyright()))]
+
+    elif name == "get_status_of_memo":
+        editor = RFCEditor()
+        editor.document = doc
+        return [TextContent(type="text", text=str(editor.get_status_of_memo()))]
+
+    elif name == "get_toc":
+        editor = RFCEditor()
+        editor.document = doc
+        return [TextContent(type="text", text=str(editor.get_toc()))]
+
+    elif name == "get_acknowledgements":
+        editor = RFCEditor()
+        editor.document = doc
+        return [TextContent(type="text", text=str(editor.get_acknowledgements()))]
+
+    elif name == "get_contributors":
+        editor = RFCEditor()
+        editor.document = doc
+        return [TextContent(type="text", text=str(editor.get_contributors()))]
+
+    elif name == "get_authors_address":
+        editor = RFCEditor()
+        editor.document = doc
+        return [TextContent(type="text", text=str(editor.get_authors_address()))]
+
+    elif name == "get_section_by_title":
+        editor = RFCEditor()
+        editor.document = doc
+        section = editor.get_section_by_title(arguments["title"])
+        return [
+            TextContent(type="text", text=str(section.to_dict() if section else None))
+        ]
 
     elif name == "set_title":
         editor = RFCEditor()

@@ -1,15 +1,16 @@
 [build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.backends.legacy:build"
+requires = ["setuptools>=61", "wheel"]
+	build-backend = "setuptools.build_meta"
 
 [project]
 name = "mcp-rfc-editor"
-version = "0.1.0.1"
+version = "0.1.0.2"
 description = "MCP server for editing RFC documents using rfc-editor library"
 requires-python = ">=3.11"
+readme = 'README.md'
 dependencies = [
     "mcp>=1.0.0",
-    "rfc-editor>=0.1.0.1",
+    "rfc-editor>=0.1.0.2",
 ]
 
 [project.optional-dependencies]
