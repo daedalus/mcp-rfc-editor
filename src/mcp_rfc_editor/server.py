@@ -69,6 +69,24 @@ async def list_tools() -> list[Tool]:
             },
         ),
         Tool(
+            name="download_rfc",
+            description="Download an RFC by number from rfc-editor and parse it",
+            inputSchema={
+                "type": "object",
+                "properties": {
+                    "rfc_id": {
+                        "type": "string",
+                        "description": "RFC number (e.g., '791' or 791)",
+                    },
+                    "filepath": {
+                        "type": "string",
+                        "description": "Optional path to save the file before parsing",
+                    },
+                },
+                "required": ["rfc_id"],
+            },
+        ),
+        Tool(
             name="create_rfc",
             description="Create a new empty RFC document",
             inputSchema={
@@ -416,6 +434,14 @@ async def call_tool(name: str, arguments: Any) -> list[TextContent]:
     if name == "load_rfc":
         editor = RFCEditor()
         result = editor.load(Path(arguments["filepath"]))
+        return [TextContent(type="text", text=str(_document_to_dict(result)))]
+
+    elif name == "download_rfc":
+        editor = RFCEditor()
+        filepath = arguments.get("filepath")
+        result = editor.download(
+            arguments["rfc_id"], Path(filepath) if filepath else None
+        )
         return [TextContent(type="text", text=str(_document_to_dict(result)))]
 
     elif name == "create_rfc":

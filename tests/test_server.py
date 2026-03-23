@@ -1,3 +1,6 @@
+from unittest.mock import patch
+
+import pytest
 from rfc_editor import RFCAuthor, RFCDocument, RFCSection
 
 from mcp_rfc_editor.server import (
@@ -59,3 +62,70 @@ class TestDocumentConversion:
         assert restored.title == original.title
         assert len(restored.authors) == len(original.authors)
         assert len(restored.sections) == len(original.sections)
+
+
+class TestDownloadRfc:
+    def test_download_rfc_by_id(self):
+
+        from mcp_rfc_editor import server
+        from mcp_rfc_editor.server import call_tool
+
+        mock_doc = RFCDocument(rfc_number="791", title="Internet Protocol")
+        with patch.object(server, "RFCEditor") as MockEditor:
+            mock_instance = MockEditor.return_value
+            mock_instance.download.return_value = mock_doc
+            import asyncio
+
+            result = asyncio.run(call_tool("download_rfc", {"rfc_id": "791"}))
+            assert len(result) == 1
+            assert "rfc_number" in result[0].text
+            assert "791" in result[0].text
+
+    def test_download_rfc_with_filepath(self):
+        from mcp_rfc_editor import server
+
+        mock_doc = RFCDocument(rfc_number="791", title="Internet Protocol")
+        with patch.object(server, "RFCEditor") as MockEditor:
+            mock_instance = MockEditor.return_value
+            mock_instance.download.return_value = mock_doc
+            import asyncio
+
+            from mcp_rfc_editor.server import call_tool
+
+            result = asyncio.run(
+                call_tool(
+                    "download_rfc", {"rfc_id": "791", "filepath": "/tmp/rfc791.txt"}
+                )
+            )
+            assert len(result) == 1
+            assert "rfc_number" in result[0].text
+
+    def test_download_rfc_invalid_id(self):
+        from mcp_rfc_editor import server
+
+        with patch.object(server, "RFCEditor") as MockEditor:
+            mock_instance = MockEditor.return_value
+            mock_instance.download.side_effect = ValueError("Invalid RFC number")
+            import asyncio
+
+            from mcp_rfc_editor.server import call_tool
+
+            with pytest.raises(ValueError, match="Invalid RFC number"):
+                asyncio.run(call_tool("download_rfc", {"rfc_id": "invalid"}))
+
+    def test_download_rfc_network_error(self):
+        import requests
+
+        from mcp_rfc_editor import server
+
+        with patch.object(server, "RFCEditor") as MockEditor:
+            mock_instance = MockEditor.return_value
+            mock_instance.download.side_effect = requests.RequestException(
+                "Network error"
+            )
+            import asyncio
+
+            from mcp_rfc_editor.server import call_tool
+
+            with pytest.raises(requests.RequestException, match="Network error"):
+                asyncio.run(call_tool("download_rfc", {"rfc_id": "9999"}))

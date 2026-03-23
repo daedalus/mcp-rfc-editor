@@ -7,6 +7,7 @@ An MCP (Model Context Protocol) server that provides tools for editing RFC TXT d
 
 ### In Scope
 - Load and parse RFC TXT files
+- Download RFCs from the internet by ID
 - Create new RFC documents from scratch
 - Modify existing RFC documents (title, abstract, sections, authors, etc.)
 - Save RFC documents back to TXT format
@@ -17,7 +18,6 @@ An MCP (Model Context Protocol) server that provides tools for editing RFC TXT d
 ### Not Scope
 - PDF generation
 - XML validation
-- Network operations (downloading RFCs from the internet)
 - Format conversion (v2 to v3)
 - ABNF validation
 
@@ -29,7 +29,12 @@ An MCP (Model Context Protocol) server that provides tools for editing RFC TXT d
    - `filepath: string` (required) - Path to RFC TXT file
    - Returns: RFCDocument structure with all fields
 
-2. **create_rfc**
+2. **download_rfc**
+   - `rfc_id: string|integer` (required) - RFC number (e.g., "791" or 791)
+   - `filepath: string` (optional) - Path to save the file before parsing
+   - Returns: RFCDocument structure with all fields
+
+3. **create_rfc**
    - `rfc_number: string` (optional) - RFC number
    - `title: string` (optional) - Document title
    - Returns: Empty RFCDocument structure
@@ -136,11 +141,11 @@ An MCP (Model Context Protocol) server that provides tools for editing RFC TXT d
 5. Section numbers should support dot notation (e.g., "1.2.3")
 6. Unicode content should be handled properly
 7. Large files (>1MB) should work without issues
+8. Downloading an invalid RFC number should raise an error
+9. Network failure during download should raise an error
+10. Invalid RFC ID format should raise an error
 
 ## Performance & Constraints
 - Python 3.11+
 - MCP SDK for server implementation
 - rfc-editor library for document manipulation
-
-## Version
-v0.1.0.1
