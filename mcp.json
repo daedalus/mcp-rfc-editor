@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "mcp-rfc-editor": {
+      "command": "mcp-rfc-editor",
+      "env": {}
+    }
+  }
+}
