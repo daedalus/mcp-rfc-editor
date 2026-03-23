@@ -6,12 +6,12 @@
     "url": "https://github.com/daedalus/mcp-rfc-editor",
     "source": "github"
   },
-  "version": "0.1.0.3",
+  "version": "0.1.0.5",
   "packages": [
     {
       "registryType": "pypi",
       "identifier": "mcp-rfc-editor",
-      "version": "0.1.0.3",
+      "version": "0.1.0.5",
       "transport": {
         "type": "stdio"
       },
