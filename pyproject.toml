@@ -4,7 +4,7 @@ requires = ["setuptools>=61", "wheel"]
 
 [project]
 name = "mcp-rfc-editor"
-version = "0.1.0.3"
+version = "0.1.1"
 description = "MCP server for editing RFC documents using rfc-editor library"
 requires-python = ">=3.11"
 readme = 'README.md'
