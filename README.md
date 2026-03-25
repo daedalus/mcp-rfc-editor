@@ -1,5 +1,7 @@
 # mcp-rfc-editor
 
+mcp-name: io.github.daedalus/mcp-rfc-editor
+
 An MCP (Model Context Protocol) server for editing RFC TXT documents using the `rfc-editor` Python library.
 
 ## Installation
